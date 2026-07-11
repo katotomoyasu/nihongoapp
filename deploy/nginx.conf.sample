@@ -1,0 +1,27 @@
+# 仕様書6.3節に対応するnginx設定サンプル。
+# サーバーブロック全体ではなく、必要箇所の抜粋です。
+# 既存のnginx構成（他サイトとの共存、サブドメイン/サブディレクトリ配置）に合わせて調整してください。
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.example;
+
+    root /path/to/site/dist;
+    index index.html;
+
+    # SPA: 存在しないパスは index.html にフォールバック
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ビルド成果物はファイル名にハッシュが付くため長期キャッシュ可
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    gzip on;
+    gzip_types text/plain application/javascript application/json text/css;
+
+    # ssl_certificate / ssl_certificate_key は Let's Encrypt 等の既存運用に準拠
+}

@@ -1,0 +1,4 @@
+node_modules/
+site/dist/
+*.local.json
+.DS_Store

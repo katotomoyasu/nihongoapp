@@ -1,0 +1,9 @@
+{
+  "科目3": {
+    "category": "社会・文化・地域",
+    "categorySlug": "s3",
+    "subcategories": {
+      "言語と社会": "gengo-shakai"
+    }
+  }
+}

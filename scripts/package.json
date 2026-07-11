@@ -1,0 +1,12 @@
+{
+  "name": "jlt-quiz-scripts",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "convert": "node convert-questions.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}
