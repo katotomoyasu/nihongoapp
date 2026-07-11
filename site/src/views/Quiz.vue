@@ -27,11 +27,11 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function shuffleChoices(q: Question): Question {
-  const order = shuffle(q.choices.map((_, i) => i))
+  const order = shuffle([0, 1, 2, 3] as const)
   return {
     ...q,
-    choices: order.map((i) => q.choices[i]),
-    correctIndex: order.indexOf(q.correctIndex),
+    choices: order.map((i) => q.choices[i]) as Question['choices'],
+    correctIndex: order.indexOf(q.correctIndex) as Question['correctIndex'],
   }
 }
 
