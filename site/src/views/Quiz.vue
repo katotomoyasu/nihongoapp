@@ -26,6 +26,15 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+function shuffleChoices(q: Question): Question {
+  const order = shuffle(q.choices.map((_, i) => i))
+  return {
+    ...q,
+    choices: order.map((i) => q.choices[i]),
+    correctIndex: order.indexOf(q.correctIndex),
+  }
+}
+
 const questions = ref<Question[]>([])
 const sessionId = ref('')
 const currentIndex = ref(0)
@@ -50,7 +59,7 @@ onMounted(() => {
   } else {
     pool = shuffle(questionsStore.all).slice(0, QUIZ_SESSION_SIZE)
   }
-  questions.value = pool
+  questions.value = pool.map(shuffleChoices)
   const session = progressStore.startSession(mode, pool.map((q) => q.id))
   sessionId.value = session.id
 })
