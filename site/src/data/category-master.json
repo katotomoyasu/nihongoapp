@@ -5,5 +5,12 @@
     "subcategories": {
       "言語と社会": "gengo-shakai"
     }
+  },
+  "科目4": {
+    "category": "言語の構造",
+    "categorySlug": "s4",
+    "subcategories": {
+      "言語の構造": "gengo-kozo"
+    }
   }
 }
