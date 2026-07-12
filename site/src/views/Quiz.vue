@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuestionsStore } from '../stores/questions'
 import { useProgressStore } from '../stores/progress'
 import { extractWeakQuestionIds } from '../utils/weakPoint'
+import { pickPrioritized } from '../utils/prioritize'
 import { QUIZ_SESSION_SIZE } from '../utils/constants'
 import type { Question } from '../types/question'
 import type { QuizMode } from '../types/progress'
@@ -51,13 +52,14 @@ onMounted(() => {
   let pool: Question[]
   if (mode === 'category') {
     const category = route.query.category as string
-    pool = shuffle(questionsStore.all.filter((q) => q.category === category)).slice(0, QUIZ_SESSION_SIZE)
+    const candidates = questionsStore.all.filter((q) => q.category === category)
+    pool = pickPrioritized(candidates, progressStore.data.records, QUIZ_SESSION_SIZE)
   } else if (mode === 'review_wrong') {
     // 優先度順（正答率が低い順）に並んでいるため、シャッフルせず先頭からQUIZ_SESSION_SIZE件を採用する
     const weakIds = extractWeakQuestionIds(progressStore.data.records).slice(0, QUIZ_SESSION_SIZE)
     pool = weakIds.map((id) => questionsStore.byId(id)).filter((q): q is Question => !!q)
   } else {
-    pool = shuffle(questionsStore.all).slice(0, QUIZ_SESSION_SIZE)
+    pool = pickPrioritized(questionsStore.all, progressStore.data.records, QUIZ_SESSION_SIZE)
   }
   questions.value = pool.map(shuffleChoices)
   const session = progressStore.startSession(mode, pool.map((q) => q.id))

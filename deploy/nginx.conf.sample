@@ -23,5 +23,16 @@ server {
     gzip on;
     gzip_types text/plain application/javascript application/json text/css;
 
+    # 成績データ保存API（server/progress-api/index.php）
+    # /path/to/site/api/progress-api/ はデプロイ対象（site/dist）の外側に配置し、
+    # rsync --delete の影響を受けないようにすること。
+    # php-fpmのソケットパスは環境に合わせて調整（AlmaLinux既定は /run/php-fpm/www.sock）。
+    location = /api/progress {
+        fastcgi_pass unix:/run/php-fpm/www.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME /path/to/site/api/progress-api/index.php;
+        include fastcgi_params;
+    }
+
     # ssl_certificate / ssl_certificate_key は Let's Encrypt 等の既存運用に準拠
 }

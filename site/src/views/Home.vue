@@ -34,7 +34,7 @@ function startWeak() {
 
     <div class="mode-card">
       <h2>全範囲演習</h2>
-      <p>全問題からランダムに出題します。</p>
+      <p>未回答・間違えたことがある問題を優先しつつ出題します。</p>
       <button @click="startAll">開始する</button>
     </div>
 

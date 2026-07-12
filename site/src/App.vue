@@ -1,14 +1,19 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { APP_VERSION } from './version'
+</script>
 
 <template>
   <div class="app-shell">
     <header class="app-header">
       <RouterLink to="/" class="brand">日本語教師試験 対策問題</RouterLink>
-      <nav class="nav">
-        <RouterLink to="/dashboard">成績</RouterLink>
-        <RouterLink to="/import">問題を取り込む</RouterLink>
-        <RouterLink to="/settings">設定</RouterLink>
-      </nav>
+      <div class="header-right">
+        <nav class="nav">
+          <RouterLink to="/dashboard">成績</RouterLink>
+          <RouterLink to="/import">問題を取り込む</RouterLink>
+          <RouterLink to="/settings">設定</RouterLink>
+        </nav>
+        <span class="version">v{{ APP_VERSION }}</span>
+      </div>
     </header>
     <main class="app-main">
       <RouterView />
@@ -34,6 +39,11 @@
   text-decoration: none;
   color: inherit;
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 .nav {
   display: flex;
   gap: 1rem;
@@ -41,6 +51,10 @@
 .nav a {
   text-decoration: none;
   color: inherit;
+}
+.version {
+  font-size: 0.75rem;
+  color: #999;
 }
 .app-main {
   flex: 1;

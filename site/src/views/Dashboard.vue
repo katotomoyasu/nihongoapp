@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useProgressStore } from '../stores/progress'
 import { useQuestionsStore } from '../stores/questions'
 import ScoreChart from '../components/ScoreChart.vue'
 
+const RECENT_LIMIT = 5
+
 const progressStore = useProgressStore()
 const questionsStore = useQuestionsStore()
+
+const chartView = ref<'category' | 'daily'>('category')
 
 const totalAnswered = computed(() => Object.keys(progressStore.data.records).length)
 
@@ -17,18 +21,43 @@ const studyDays = computed(() => {
 })
 
 const categoryAccuracy = computed(() => {
-  const stats: Record<string, { attempts: number; correct: number }> = {}
+  const stats: Record<string, { attempts: number; correct: number; lastAnsweredAt: string }> = {}
   for (const q of questionsStore.all) {
     const record = progressStore.data.records[q.id]
     if (!record) continue
-    stats[q.category] ??= { attempts: 0, correct: 0 }
-    stats[q.category].attempts += record.attempts
-    stats[q.category].correct += record.correct
+    const s = (stats[q.category] ??= { attempts: 0, correct: 0, lastAnsweredAt: '' })
+    s.attempts += record.attempts
+    s.correct += record.correct
+    if (record.lastAnsweredAt > s.lastAnsweredAt) s.lastAnsweredAt = record.lastAnsweredAt
   }
-  return Object.entries(stats).map(([category, s]) => ({
-    category,
-    accuracy: s.attempts === 0 ? 0 : Math.round((s.correct / s.attempts) * 100),
-  }))
+  return Object.entries(stats)
+    .map(([category, s]) => ({
+      category,
+      accuracy: s.attempts === 0 ? 0 : Math.round((s.correct / s.attempts) * 100),
+      lastAnsweredAt: s.lastAnsweredAt,
+    }))
+    .sort((a, b) => b.lastAnsweredAt.localeCompare(a.lastAnsweredAt))
+    .slice(0, RECENT_LIMIT)
+})
+
+const dailyAccuracy = computed(() => {
+  const stats: Record<string, { attempts: number; correct: number }> = {}
+  for (const record of Object.values(progressStore.data.records)) {
+    for (const h of record.history) {
+      const day = h.at.slice(0, 10)
+      const s = (stats[day] ??= { attempts: 0, correct: 0 })
+      s.attempts += 1
+      if (h.result === 'correct') s.correct += 1
+    }
+  }
+  return Object.entries(stats)
+    .map(([day, s]) => ({
+      day,
+      accuracy: s.attempts === 0 ? 0 : Math.round((s.correct / s.attempts) * 100),
+    }))
+    .sort((a, b) => b.day.localeCompare(a.day))
+    .slice(0, RECENT_LIMIT)
+    .reverse()
 })
 
 const weakRanking = computed(() => {
@@ -61,11 +90,34 @@ const recentSessions = computed(() =>
       <div class="stat"><span class="value">{{ studyDays }}</span><span>学習日数</span></div>
     </div>
 
-    <h2>カテゴリ別正答率</h2>
+    <div class="chart-header">
+      <h2>{{ chartView === 'category' ? 'カテゴリ別正答率（直近5件）' : '日別正答率（直近5日間）' }}</h2>
+      <div class="chart-tabs">
+        <button
+          type="button"
+          :class="{ active: chartView === 'category' }"
+          @click="chartView = 'category'"
+        >
+          カテゴリ別
+        </button>
+        <button
+          type="button"
+          :class="{ active: chartView === 'daily' }"
+          @click="chartView = 'daily'"
+        >
+          日別
+        </button>
+      </div>
+    </div>
     <ScoreChart
-      v-if="categoryAccuracy.length > 0"
+      v-if="chartView === 'category' && categoryAccuracy.length > 0"
       :labels="categoryAccuracy.map((c) => c.category)"
       :values="categoryAccuracy.map((c) => c.accuracy)"
+    />
+    <ScoreChart
+      v-else-if="chartView === 'daily' && dailyAccuracy.length > 0"
+      :labels="dailyAccuracy.map((d) => d.day)"
+      :values="dailyAccuracy.map((d) => d.accuracy)"
     />
     <p v-else>まだデータがありません。</p>
 
@@ -103,5 +155,29 @@ const recentSessions = computed(() =>
 .stat .value {
   font-size: 1.5rem;
   font-weight: 700;
+}
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.chart-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+.chart-tabs button {
+  border: 1px solid #e2e2e2;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.chart-tabs button.active {
+  background: #42a5f5;
+  border-color: #42a5f5;
+  color: #fff;
 }
 </style>

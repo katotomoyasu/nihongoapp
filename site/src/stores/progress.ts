@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { AnswerResult, ProgressData, QuizMode, QuizSession } from '../types/progress'
 import { HISTORY_LIMIT } from '../types/progress'
 import { loadProgress, saveProgress, resetProgress } from '../utils/storage'
+import { loadSyncConfig, pushProgress } from '../utils/serverSync'
 
 function nowIso(): string {
   return new Date().toISOString()
@@ -58,6 +59,14 @@ export const useProgressStore = defineStore('progress', {
       session.correctCount = correctCount
       session.wrongQuestionIds = wrongQuestionIds
       saveProgress(this.data)
+      this.syncToServer()
+    },
+    syncToServer() {
+      const config = loadSyncConfig()
+      if (!config) return
+      pushProgress(config, JSON.stringify(this.data)).catch(() => {
+        // オフライン等での失敗は無視する（データはlocalStorageに残っている）
+      })
     },
     resetAll() {
       this.data = resetProgress()
