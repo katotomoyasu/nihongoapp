@@ -5,7 +5,7 @@ import { useQuestionsStore } from '../stores/questions'
 import { useProgressStore } from '../stores/progress'
 import { extractWeakQuestionIds } from '../utils/weakPoint'
 import { pickPrioritized } from '../utils/prioritize'
-import { QUIZ_SESSION_SIZE } from '../utils/constants'
+import { QUIZ_SESSION_SIZE_OPTIONS, QUIZ_SESSION_SIZE_DEFAULT } from '../utils/constants'
 import type { Question } from '../types/question'
 import type { QuizMode } from '../types/progress'
 import QuestionCard from '../components/QuestionCard.vue'
@@ -49,17 +49,21 @@ const isLast = computed(() => currentIndex.value === questions.value.length - 1)
 
 onMounted(() => {
   const mode = (route.query.mode as QuizMode) ?? 'all'
+  const requestedCount = Number(route.query.count)
+  const sessionSize = QUIZ_SESSION_SIZE_OPTIONS.includes(requestedCount as (typeof QUIZ_SESSION_SIZE_OPTIONS)[number])
+    ? requestedCount
+    : QUIZ_SESSION_SIZE_DEFAULT
   let pool: Question[]
   if (mode === 'category') {
     const category = route.query.category as string
     const candidates = questionsStore.all.filter((q) => q.category === category)
-    pool = pickPrioritized(candidates, progressStore.data.records, QUIZ_SESSION_SIZE)
+    pool = pickPrioritized(candidates, progressStore.data.records, sessionSize)
   } else if (mode === 'review_wrong') {
-    // 優先度順（正答率が低い順）に並んでいるため、シャッフルせず先頭からQUIZ_SESSION_SIZE件を採用する
-    const weakIds = extractWeakQuestionIds(progressStore.data.records).slice(0, QUIZ_SESSION_SIZE)
+    // 優先度順（正答率が低い順）に並んでいるため、シャッフルせず先頭からsessionSize件を採用する
+    const weakIds = extractWeakQuestionIds(progressStore.data.records).slice(0, sessionSize)
     pool = weakIds.map((id) => questionsStore.byId(id)).filter((q): q is Question => !!q)
   } else {
-    pool = pickPrioritized(questionsStore.all, progressStore.data.records, QUIZ_SESSION_SIZE)
+    pool = pickPrioritized(questionsStore.all, progressStore.data.records, sessionSize)
   }
   questions.value = pool.map(shuffleChoices)
   const session = progressStore.startSession(mode, pool.map((q) => q.id))
