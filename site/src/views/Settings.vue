@@ -25,14 +25,21 @@ function currentSyncConfig() {
   return { endpoint: syncEndpoint.value, token: syncToken.value }
 }
 
-function handleSaveSyncConfig() {
+async function handleSaveSyncConfig() {
   const config = currentSyncConfig()
   if (!config) {
     syncMessage.value = 'APIのURLとトークンを入力してください。'
     return
   }
   saveSyncConfig(config)
-  syncMessage.value = '同期設定を保存しました。'
+  syncing.value = true
+  try {
+    // 保存直後にサーバー側とマージしておく（他端末の成績を空データで上書きしないため）
+    await progressStore.syncFromServer()
+    syncMessage.value = '同期設定を保存し、サーバーのデータと同期しました。'
+  } finally {
+    syncing.value = false
+  }
 }
 
 function handleClearSyncConfig() {

@@ -2,7 +2,13 @@ import { defineStore } from 'pinia'
 import type { AnswerResult, ProgressData, QuizMode, QuizSession } from '../types/progress'
 import { HISTORY_LIMIT } from '../types/progress'
 import { loadProgress, saveProgress, resetProgress } from '../utils/storage'
-import { loadSyncConfig, pushProgress } from '../utils/serverSync'
+import { loadSyncConfig, pushProgress, pullProgress } from '../utils/serverSync'
+import { mergeProgressData } from '../utils/mergeProgress'
+
+function isValidProgressData(value: unknown): value is ProgressData {
+  const v = value as ProgressData
+  return !!v && v.schemaVersion === 1 && !!v.records && !!v.sessions
+}
 
 function nowIso(): string {
   return new Date().toISOString()
@@ -67,6 +73,23 @@ export const useProgressStore = defineStore('progress', {
       pushProgress(config, JSON.stringify(this.data)).catch(() => {
         // オフライン等での失敗は無視する（データはlocalStorageに残っている）
       })
+    },
+    // 起動時・同期設定の保存時に呼ぶ。サーバー側のデータを取得し、この端末のローカルデータと
+    // マージしてから両方に反映する。これをせずにpushだけすると、別端末の空/古いデータで
+    // サーバー側の成績を上書き・消失させてしまうため。
+    async syncFromServer(): Promise<void> {
+      const config = loadSyncConfig()
+      if (!config) return
+      try {
+        const json = await pullProgress(config)
+        const remote = JSON.parse(json)
+        if (!isValidProgressData(remote)) return
+        this.data = mergeProgressData(this.data, remote)
+        saveProgress(this.data)
+        await pushProgress(config, JSON.stringify(this.data))
+      } catch {
+        // サーバー未設定・未保存(404)・オフライン等は無視し、ローカルデータのまま続行する
+      }
     },
     resetAll() {
       this.data = resetProgress()

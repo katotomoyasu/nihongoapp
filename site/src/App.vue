@@ -1,5 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { APP_VERSION } from './version'
+import { useProgressStore } from './stores/progress'
+
+const progressStore = useProgressStore()
+
+onMounted(() => {
+  // サーバー同期が設定済みなら、起動時にサーバー側とマージしてから使う
+  // （別端末で設定しただけの状態でpushしてしまい、他端末の成績を消すのを防ぐため）
+  progressStore.syncFromServer()
+})
 </script>
 
 <template>
