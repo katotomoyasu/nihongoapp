@@ -121,6 +121,7 @@ function next() {
         {{ selectedIndex === current.correctIndex ? '正解！' : '不正解' }}
       </p>
       <p class="explanation">{{ current.explanation }}</p>
+      <p v-if="current.source" class="source">出典: {{ current.source }}</p>
       <button @click="next">{{ isLast ? '結果を見る' : '次の問題へ' }}</button>
     </div>
   </section>
@@ -150,5 +151,10 @@ function next() {
 .explanation {
   white-space: pre-wrap;
   line-height: 1.6;
+}
+.source {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
 }
 </style>

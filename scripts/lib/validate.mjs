@@ -61,6 +61,13 @@ export function validateAndBuild({ parsed, categoryInfo, fileLabel }) {
     const correctIndex = answerLetterToIndex(correctLetter)
     const id = `${categoryInfo.categorySlug}-${categoryInfo.subcategorySlug}-${String(row.no).padStart(3, '0')}`
 
+    // 「詳細解説」シートの「なぜ正解か」「各誤答の解説」の方が詳しいため優先し、
+    // その行がない場合のみ「問題」シートの解説列にフォールバックする。
+    const detail = parsed.detailExplanationByNo.get(row.no)
+    const explanation = detail
+      ? [detail.why, detail.wrongExplain].filter(Boolean).join('\n')
+      : row.explanation || ''
+
     questions.push({
       id,
       no: row.no,
@@ -70,7 +77,7 @@ export function validateAndBuild({ parsed, categoryInfo, fileLabel }) {
       text: row.text,
       choices: row.choices,
       correctIndex,
-      explanation: row.explanation || '',
+      explanation,
       ...(row.source ? { source: row.source } : {}),
     })
   }

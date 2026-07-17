@@ -47,13 +47,20 @@ export async function parseExcelFile(filePath) {
     correctByNo.set(Number(no), correct)
   }
 
-  // 詳細解説シート: 正解列(D列/4列目)。整合性チェック用。
+  // 詳細解説シート: 正解列(D列/4列目)は整合性チェック用。
+  // 「なぜ正解か」(I列/9列目)・「各誤答の解説」(J列/10列目)は解説文の主ソースとして使う。
   const detailCorrectByNo = new Map()
+  const detailExplanationByNo = new Map()
   if (sheetShosai) {
     for (let r = 2; r <= sheetShosai.rowCount; r++) {
       const no = sheetShosai.getCell(r, 1).value
       if (no === null || no === undefined || no === '') continue
       detailCorrectByNo.set(Number(no), cellText(sheetShosai.getCell(r, 4)))
+      const why = cellText(sheetShosai.getCell(r, 9))
+      const wrongExplain = cellText(sheetShosai.getCell(r, 10))
+      if (why || wrongExplain) {
+        detailExplanationByNo.set(Number(no), { why, wrongExplain })
+      }
     }
   }
 
@@ -81,5 +88,5 @@ export async function parseExcelFile(filePath) {
     })
   }
 
-  return { title, titleInfo, rows, correctByNo, detailCorrectByNo }
+  return { title, titleInfo, rows, correctByNo, detailCorrectByNo, detailExplanationByNo }
 }
