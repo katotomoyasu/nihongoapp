@@ -55,17 +55,17 @@ interface Question {
   text: string           // 穴埋め形式なら「（　）」を含む文字列でもよい
   choices: [string, string, string, string]
   correctIndex: 0 | 1 | 2 | 3
-  explanation: string
-  source?: string
+  explanation: string     // 「詳細解説」シートの「なぜ正解か」＋「各誤答の解説」優先。なければ「問題」シートの解説列にフォールバック
+  source?: string          // 画面上は解説の下に小さく表示する（出典・ページ数など）
 }
 ```
 
 ### 3. Excel原稿フォーマットを決める（3シート構成の例）
-- **問題シート**：No / 難易度 / 問題文 / 選択肢A〜D / （正解列は別シートに分離）/ 解説 / 出典
+- **問題シート**：No / 難易度 / 問題文 / 選択肢A〜D / （正解列は別シートに分離）/ 解説 / 出典。ここの解説列は簡易でよい（詳細解説シートが空のNoのフォールバック用）
 - **管理データシート**：B1にタイトル文字列（`YYYYMMDD_科目N_カテゴリ_中分類_問題_v01`形式）、8行目以降にNo・正解
-- **詳細解説シート**：Noごとの正解・各誤答の解説（管理データと正解が一致するかクロスチェックに使う）
+- **詳細解説シート**：Noごとの正解（管理データと一致するかクロスチェックに使う）・「なぜ正解か」・「各誤答の解説」。**アプリに表示する解説文はこのシートの「なぜ正解か」＋「各誤答の解説」を優先ソースにする**（誤答ごとの理由まで詳しく書けるため）。ここを書き込まずに「問題」シートの解説列だけ書くと、表示される解説が薄くなる点に注意
 
-タイトル文字列から科目・中分類を抽出し、`category-master.json` で slug に変換 → `id` を組み立てる。
+タイトル文字列から科目・中分類を抽出し、`category-master.json` で slug に変換 → `id` を組み立てる。**大分類と中分類が同じ名前になる科目（例：「言語の構造」）でも、タイトル文字列には両方を重複して書く**（`科目4_言語の構造_言語の構造_問題_v01`）。正規表現がカテゴリ・中分類の2セグメントを前提にしているため、1回しか書かないと解析に失敗する。
 
 ### 4. Node CLIでの変換スクリプト（scripts/convert-questions.mjs）
 - `questions-source/**/current/*.xlsx` を走査
@@ -85,6 +85,12 @@ interface Question {
 ### 7. localStorage設計（進捗ストア）
 - 正誤履歴を問題ID単位で蓄積し、正答率・苦手問題抽出のロジックはこの履歴から導出する
 - エクスポート/インポート（JSON）機能を用意しておくと端末間の引き継ぎができる
+
+### 8. 複数端末サーバー同期（任意拡張・DBなし方針を維持したまま）
+「バックエンドなし」の原則を保ったまま、複数端末間の成績同期だけが欲しい場合は、フルAPIではなく**進捗JSONを1ファイルとして読み書きするだけの極小PHPエンドポイント**で足りる（`server/progress-api/index.php`が実例）。
+- `Authorization: Bearer <固定トークン>`で認証、GETで現在のJSONを返す・POSTで丸ごと上書き保存（DBではなくファイル1本、`rename()`でアトミック書き込み）
+- マージはクライアント側でアプリ起動時に行う（サーバーはマージ処理を持たない。「起動時マージ方式」）。これにより別端末で使った後にもう一方の端末のデータを消してしまう事故を防ぐ
+- この構成は静的サイト配信用nginxと同居できる（PHP-FPM等が動けばよく、DBサーバーは不要）
 
 ## サブディレクトリ配信の注意点（重要）
 
@@ -109,19 +115,19 @@ location /appName/ {
 
 ## デプロイ手順（VPS/nginx想定）
 
+**sudoは使わない。** `git clone`/`git pull`/`npm install`/`npm run build`をsudoで実行すると、`node_modules`や`dist`の所有者がroot（またはnginxユーザー）に変わり、以後そのユーザーで`npm run build`する際に`EACCES: permission denied`が再発する。リポジトリの配置ディレクトリ自体を最初から通常ユーザーの所有にしておき、sudoなしで完結させる。
+
 ```bash
-# 初回
-cd /var/www && sudo git clone <repo> appName
-cd appName/site && sudo npm install && sudo npm run build
-sudo chown -R nginx:nginx dist   # nginxの実行ユーザーに合わせる（ps aux | grep nginxで確認）
+# 初回（例：通常ユーザーのホーム配下、または /var/www 配下を事前にそのユーザー所有にしておく）
+git clone <repo> appName
+cd appName/site && npm install && npm run build
 
 # 更新時
-cd /var/www/appName && sudo git pull
-cd site && sudo npm run build
-sudo chown -R nginx:nginx dist
+cd /var/www/appName && git pull
+cd site && npm run build
 ```
 
-nginxの実行ユーザーは `ps aux | grep nginx` または `nginx.conf` の `user` 行で確認する（`www-data`とは限らない。AlmaLinux系では`nginx`ユーザーが多い）。
+nginxは`dist`配下を読み取るだけなので、nginx実行ユーザーへの`chown`は不要（読み取り権限さえあればよい）。もし過去にsudoで壊してEACCESが出ている場合は、`sudo chown -R <通常ユーザー>:<通常ユーザー> appName`で所有者を戻してからsudoなしでbuildし直す。
 
 ## チェックリスト（新規アプリ作成時）
 
@@ -132,4 +138,5 @@ nginxの実行ユーザーは `ps aux | grep nginx` または `nginx.conf` の `
 - [ ] ブラウザ版インポート機能（ExcelJS、dynamic import化）
 - [ ] QUIZ_SESSION_SIZE等の出題数上限の決定
 - [ ] vite.config.tsのbase設定（サブディレクトリ配信の場合）
-- [ ] nginx設定・デプロイスクリプトの用意
+- [ ] nginx設定・デプロイスクリプトの用意（sudoを使わない前提で、配置先ディレクトリの所有者を事前に揃える）
+- [ ] 複数端末での利用を想定するか（想定する場合は8節の極小PHP同期エンドポイントを検討）
