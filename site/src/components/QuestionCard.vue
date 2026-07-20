@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Question } from '../types/question'
 
-defineProps<{ question: Question; index: number; total: number }>()
+defineProps<{ question: Question; index: number; total: number; attempts: number }>()
 </script>
 
 <template>
@@ -10,6 +10,7 @@ defineProps<{ question: Question; index: number; total: number }>()
       <span>{{ index }} / {{ total }}問</span>
       <span>{{ question.category }} - {{ question.subcategory }}</span>
       <span>難易度 {{ '★'.repeat(question.difficulty) }}</span>
+      <span>出題回数 {{ attempts }}回</span>
     </div>
     <p class="text">{{ question.text }}</p>
   </div>

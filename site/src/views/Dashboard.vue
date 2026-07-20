@@ -13,6 +13,10 @@ const chartView = ref<'category' | 'daily'>('category')
 
 const totalAnswered = computed(() => Object.keys(progressStore.data.records).length)
 
+const totalAttempts = computed(() =>
+  Object.values(progressStore.data.records).reduce((sum, r) => sum + r.attempts, 0),
+)
+
 const studyDays = computed(() => {
   const days = new Set(
     Object.values(progressStore.data.records).map((r) => r.lastAnsweredAt.slice(0, 10)),
@@ -66,6 +70,7 @@ const weakRanking = computed(() => {
       id,
       text: questionsStore.byId(id)?.text ?? id,
       incorrectCount: r.attempts - r.correct,
+      attempts: r.attempts,
     }))
     .filter((r) => r.incorrectCount > 0)
     .sort((a, b) => b.incorrectCount - a.incorrectCount)
@@ -88,6 +93,7 @@ const recentSessions = computed(() =>
       <div class="stat"><span class="value">{{ progressStore.overallAccuracy }}%</span><span>全体正答率</span></div>
       <div class="stat"><span class="value">{{ totalAnswered }}</span><span>回答済み問題数</span></div>
       <div class="stat"><span class="value">{{ studyDays }}</span><span>学習日数</span></div>
+      <div class="stat"><span class="value">{{ totalAttempts }}</span><span>延べ出題回数</span></div>
     </div>
 
     <div class="chart-header">
@@ -123,7 +129,7 @@ const recentSessions = computed(() =>
 
     <h2>苦手問題ランキング</h2>
     <ol v-if="weakRanking.length > 0">
-      <li v-for="w in weakRanking" :key="w.id">{{ w.text }}（不正解 {{ w.incorrectCount }} 回）</li>
+      <li v-for="w in weakRanking" :key="w.id">{{ w.text }}（不正解 {{ w.incorrectCount }} 回 / 出題 {{ w.attempts }} 回）</li>
     </ol>
     <p v-else>まだデータがありません。</p>
 

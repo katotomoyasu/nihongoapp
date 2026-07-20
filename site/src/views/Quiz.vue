@@ -104,7 +104,12 @@ function next() {
 
 <template>
   <section v-if="current">
-    <QuestionCard :question="current" :index="currentIndex + 1" :total="questions.length" />
+    <QuestionCard
+      :question="current"
+      :index="currentIndex + 1"
+      :total="questions.length"
+      :attempts="progressStore.data.records[current.id]?.attempts ?? 0"
+    />
 
     <ChoiceButton
       v-for="(choice, i) in current.choices"
