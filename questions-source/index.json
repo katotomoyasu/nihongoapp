@@ -5,7 +5,7 @@
     "currentFile": "科目3_社会文化地域/言語と社会/current/科目3_社会文化地域_言語と社会_v02_20260711.xlsx",
     "version": 2,
     "questionCount": 200,
-    "lastConvertedAt": "2026-08-14T23:23:38.518Z"
+    "lastConvertedAt": "2026-08-25T14:47:09.900Z"
   },
   "s4-gengo-kozo": {
     "category": "言語の構造",
@@ -13,7 +13,7 @@
     "currentFile": "科目4_言語の構造/言語の構造/current/科目4_言語の構造_言語の構造_v04_20260720.xlsx",
     "version": 4,
     "questionCount": 149,
-    "lastConvertedAt": "2026-08-14T23:23:38.468Z"
+    "lastConvertedAt": "2026-08-25T14:47:09.862Z"
   },
   "s7-goyoron-kihan": {
     "category": "語用論的規範",
@@ -21,6 +21,14 @@
     "currentFile": "科目7_語用論的規範/語用論的規範/current/科目7_語用論的規範_語用論的規範_v01_20260815.xlsx",
     "version": 1,
     "questionCount": 186,
-    "lastConvertedAt": "2026-08-14T23:23:38.429Z"
+    "lastConvertedAt": "2026-08-25T14:47:09.824Z"
+  },
+  "s8-keitai-goi-imi": {
+    "category": "形態・語彙・意味",
+    "subcategory": "形態語彙意味",
+    "currentFile": "科目8_形態語彙意味/形態語彙意味/current/科目8_形態語彙意味_形態語彙意味_v01_20260825.xlsx",
+    "version": 1,
+    "questionCount": 146,
+    "lastConvertedAt": "2026-08-25T14:47:09.776Z"
   }
 }

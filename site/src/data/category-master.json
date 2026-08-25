@@ -19,5 +19,12 @@
     "subcategories": {
       "語用論的規範": "goyoron-kihan"
     }
+  },
+  "科目8": {
+    "category": "形態・語彙・意味",
+    "categorySlug": "s8",
+    "subcategories": {
+      "形態語彙意味": "keitai-goi-imi"
+    }
   }
 }
