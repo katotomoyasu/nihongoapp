@@ -101,9 +101,15 @@ function choiceStatus(index: number): 'idle' | 'correct' | 'incorrect' | 'faded'
   return 'faded'
 }
 
-const explanationSegments = computed(() =>
-  current.value ? formatExplanation(current.value.explanation, current.value.choices) : [],
-)
+const explanationSegments = computed(() => {
+  if (!current.value) return []
+  const q = current.value
+  const correctLabel = LABELS[q.correctIndex]
+  return formatExplanation(q.explanation, q.choices)
+    .map((seg) => ({ ...seg, displayLabel: q.explanationLabelMap[seg.label] ?? seg.label }))
+    .sort((a, b) => a.displayLabel.localeCompare(b.displayLabel))
+    .map((seg) => ({ ...seg, isCorrect: seg.displayLabel === correctLabel }))
+})
 
 function next() {
   if (isLast.value) {
@@ -142,7 +148,9 @@ function next() {
       </p>
       <div class="explanation">
         <p v-for="(seg, idx) in explanationSegments" :key="idx">
-          <strong v-if="seg.label" class="seg-label">{{ current.explanationLabelMap[seg.label] }}：</strong><span v-html="seg.html"></span>
+          <strong class="seg-label" :class="{ correct: seg.isCorrect }"
+            >{{ seg.displayLabel }}{{ seg.isCorrect ? '（正解）' : '' }}：</strong
+          ><span v-html="seg.html"></span>
         </p>
       </div>
       <p v-if="current.source" class="source">出典: {{ current.source }}</p>
@@ -189,6 +197,9 @@ function next() {
 .explanation .seg-label {
   color: inherit;
   margin-right: 0.2rem;
+}
+.explanation .seg-label.correct {
+  color: #2e7d32;
 }
 .source {
   margin-top: 0.5rem;
