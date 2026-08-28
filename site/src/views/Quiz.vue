@@ -6,6 +6,7 @@ import { useProgressStore } from '../stores/progress'
 import { extractWeakQuestionIds } from '../utils/weakPoint'
 import { pickPrioritized } from '../utils/prioritize'
 import { QUIZ_SESSION_SIZE_OPTIONS, QUIZ_SESSION_SIZE_DEFAULT } from '../utils/constants'
+import { formatExplanation } from '../utils/explanation'
 import type { Question } from '../types/question'
 import type { QuizMode } from '../types/progress'
 import QuestionCard from '../components/QuestionCard.vue'
@@ -27,16 +28,21 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-function shuffleChoices(q: Question): Question {
+type ShuffledQuestion = Question & { displayLabels: [string, string, string, string] }
+
+function shuffleChoices(q: Question): ShuffledQuestion {
   const order = shuffle([0, 1, 2, 3] as const)
   return {
     ...q,
     choices: order.map((i) => q.choices[i]) as Question['choices'],
     correctIndex: order.indexOf(q.correctIndex) as Question['correctIndex'],
+    // 解説文中の「A：」「B：」等は元の選択肢を指しているため、シャッフル後も
+    // ラベルは表示位置ではなく元の選択肢に追従させる
+    displayLabels: order.map((i) => LABELS[i]) as [string, string, string, string],
   }
 }
 
-const questions = ref<Question[]>([])
+const questions = ref<ShuffledQuestion[]>([])
 const sessionId = ref('')
 const currentIndex = ref(0)
 const selectedIndex = ref<number | null>(null)
@@ -90,6 +96,10 @@ function choiceStatus(index: number): 'idle' | 'correct' | 'incorrect' | 'faded'
   return 'faded'
 }
 
+const explanationSegments = computed(() =>
+  current.value ? formatExplanation(current.value.explanation, current.value.choices) : [],
+)
+
 function next() {
   if (isLast.value) {
     progressStore.finishSession(sessionId.value, correctCount.value, wrongIds.value)
@@ -114,7 +124,7 @@ function next() {
     <ChoiceButton
       v-for="(choice, i) in current.choices"
       :key="i"
-      :label="LABELS[i]"
+      :label="current.displayLabels[i]"
       :text="choice"
       :status="choiceStatus(i)"
       :disabled="answered"
@@ -125,7 +135,11 @@ function next() {
       <p class="result" :class="selectedIndex === current.correctIndex ? 'ok' : 'ng'">
         {{ selectedIndex === current.correctIndex ? '正解！' : '不正解' }}
       </p>
-      <p class="explanation">{{ current.explanation }}</p>
+      <div class="explanation">
+        <p v-for="(seg, idx) in explanationSegments" :key="idx">
+          <strong v-if="seg.label" class="seg-label">{{ seg.label }}：</strong><span v-html="seg.html"></span>
+        </p>
+      </div>
       <p v-if="current.source" class="source">出典: {{ current.source }}</p>
       <button @click="next">{{ isLast ? '結果を見る' : '次の問題へ' }}</button>
     </div>
@@ -154,8 +168,21 @@ function next() {
   color: #c62828;
 }
 .explanation {
-  white-space: pre-wrap;
-  line-height: 1.6;
+  line-height: 1.7;
+}
+.explanation p {
+  margin: 0 0 0.6rem;
+}
+.explanation p:last-child {
+  margin-bottom: 0;
+}
+.explanation :deep(strong) {
+  color: #c62828;
+  font-weight: 700;
+}
+.explanation .seg-label {
+  color: inherit;
+  margin-right: 0.2rem;
 }
 .source {
   margin-top: 0.5rem;
