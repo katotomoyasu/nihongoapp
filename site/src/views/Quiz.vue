@@ -28,17 +28,22 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-type ShuffledQuestion = Question & { displayLabels: [string, string, string, string] }
+type ShuffledQuestion = Question & { explanationLabelMap: Record<string, string> }
 
 function shuffleChoices(q: Question): ShuffledQuestion {
   const order = shuffle([0, 1, 2, 3] as const)
+  // 選択肢は常にA〜Dの順で表示する。一方で解説文中の「A：」「B：」等は元の並びを
+  // 指しているため、元のラベル→シャッフル後に表示される位置のラベル、への対応表を作り
+  // 解説側の表示だけを付け替える。
+  const explanationLabelMap: Record<string, string> = {}
+  order.forEach((originalIndex, newIndex) => {
+    explanationLabelMap[LABELS[originalIndex]] = LABELS[newIndex]
+  })
   return {
     ...q,
     choices: order.map((i) => q.choices[i]) as Question['choices'],
     correctIndex: order.indexOf(q.correctIndex) as Question['correctIndex'],
-    // 解説文中の「A：」「B：」等は元の選択肢を指しているため、シャッフル後も
-    // ラベルは表示位置ではなく元の選択肢に追従させる
-    displayLabels: order.map((i) => LABELS[i]) as [string, string, string, string],
+    explanationLabelMap,
   }
 }
 
@@ -124,7 +129,7 @@ function next() {
     <ChoiceButton
       v-for="(choice, i) in current.choices"
       :key="i"
-      :label="current.displayLabels[i]"
+      :label="LABELS[i]"
       :text="choice"
       :status="choiceStatus(i)"
       :disabled="answered"
@@ -137,7 +142,7 @@ function next() {
       </p>
       <div class="explanation">
         <p v-for="(seg, idx) in explanationSegments" :key="idx">
-          <strong v-if="seg.label" class="seg-label">{{ seg.label }}：</strong><span v-html="seg.html"></span>
+          <strong v-if="seg.label" class="seg-label">{{ current.explanationLabelMap[seg.label] }}：</strong><span v-html="seg.html"></span>
         </p>
       </div>
       <p v-if="current.source" class="source">出典: {{ current.source }}</p>
@@ -156,6 +161,7 @@ function next() {
   padding: 1rem;
   border-radius: 8px;
   background: #f5f5f5;
+  text-align: left;
 }
 .result {
   font-weight: 700;
