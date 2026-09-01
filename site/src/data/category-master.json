@@ -26,5 +26,12 @@
     "subcategories": {
       "形態語彙意味": "keitai-goi-imi"
     }
+  },
+  "科目10": {
+    "category": "評価法とICT",
+    "categorySlug": "s10",
+    "subcategories": {
+      "評価法とICT": "hyokaho-ict"
+    }
   }
 }
