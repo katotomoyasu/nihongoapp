@@ -33,5 +33,12 @@
     "subcategories": {
       "評価法とICT": "hyokaho-ict"
     }
+  },
+  "科目9": {
+    "category": "日本語教育文法",
+    "categorySlug": "s9",
+    "subcategories": {
+      "日本語教育文法": "nihongo-kyoiku-bunpo"
+    }
   }
 }
