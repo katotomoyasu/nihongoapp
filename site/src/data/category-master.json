@@ -40,5 +40,12 @@
     "subcategories": {
       "日本語教育文法": "nihongo-kyoiku-bunpo"
     }
+  },
+  "科目11": {
+    "category": "日本語教育実践1",
+    "categorySlug": "s11",
+    "subcategories": {
+      "日本語教育実践1": "nihongo-kyoiku-jissen1"
+    }
   }
 }
