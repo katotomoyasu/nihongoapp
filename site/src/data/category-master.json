@@ -54,5 +54,12 @@
     "subcategories": {
       "日本語教育実践2": "nihongo-kyoiku-jissen2"
     }
+  },
+  "科目13": {
+    "category": "日本語教育実践3",
+    "categorySlug": "s13",
+    "subcategories": {
+      "日本語教育実践3": "nihongo-kyoiku-jissen3"
+    }
   }
 }
